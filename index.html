@@ -17,6 +17,11 @@
      (link dạng https://script.google.com/macros/s/....../exec)
      ========================================================= */
   const APP_URL = 'https://script.google.com/macros/s/AKfycbw7_rYGLVbM-vy9nAIQ49l5MUVtJV1pyOh8awvOsqFyitCzwPree6L055Ny1J95D5C8_A/exec';
+
+  /* Chế độ mở:
+     false = nhúng toàn màn hình (đẹp nhất, cần dòng setXFrameOptionsMode trong Code.gs)
+     true  = mở thẳng link web app (luôn chạy được, có thanh tiêu đề nhỏ phía trên) */
+  const OPEN_DIRECT = false;
 </script>
 <style>
   html,body{margin:0;height:100%;background:#2563eb;overflow:hidden;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -71,6 +76,7 @@ function start(){
   const url = APP_URL || store.get();
   if (!url) { $('splash').classList.add('hidden'); $('setup').classList.remove('hidden'); return; }
   if (!navigator.onLine) { $('splash').classList.add('hidden'); $('offline').classList.remove('hidden'); return; }
+  if (OPEN_DIRECT || /[?&]direct/.test(location.search)) { location.replace(url); return; }
   const f = $('app');
   f.classList.remove('hidden');
   f.onload = () => { f.classList.add('ready'); setTimeout(() => $('splash').classList.add('hidden'), 300); };
