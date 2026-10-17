@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thu Chi Gia Đình</title>
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Thu Chi">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+  /* =========================================================
+     DÁN LINK WEB APP APPS SCRIPT CỦA BẠN VÀO ĐÂY
+     (link dạng https://script.google.com/macros/s/....../exec)
+     ========================================================= */
+  const APP_URL = 'https://script.google.com/macros/s/AKfycbw7_rYGLVbM-vy9nAIQ49l5MUVtJV1pyOh8awvOsqFyitCzwPree6L055Ny1J95D5C8_A/exec';
+</script>
+<style>
+  html,body{margin:0;height:100%;background:#2563eb;overflow:hidden;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  #app{position:fixed;inset:0;width:100%;height:100%;border:0;background:#f4f6fb;opacity:0;transition:opacity .3s}
+  #app.ready{opacity:1}
+  .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;gap:14px}
+  .screen img{width:96px;height:96px;border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+  .screen h1{margin:0;font-size:20px}
+  .screen p{margin:0;opacity:.9;font-size:14px;max-width:340px;line-height:1.5}
+  .spin{width:28px;height:28px;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:s 1s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .screen input{width:100%;max-width:360px;padding:12px;border-radius:10px;border:0;font-size:14px}
+  .screen button{padding:12px 22px;border:0;border-radius:10px;background:#fff;color:#2563eb;font-weight:700;font-size:15px;cursor:pointer}
+  #install{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:none;z-index:5;
+    background:#111827;color:#fff;border:0;border-radius:24px;padding:12px 20px;font-size:15px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="splash" class="screen">
+  <img src="icons/icon-192.png" alt="">
+  <h1>Thu Chi Gia Đình</h1>
+  <div class="spin"></div>
+</div>
+
+<div id="offline" class="screen hidden">
+  <img src="icons/icon-192.png" alt="">
+  <h1>Không có kết nối mạng</h1>
+  <p>App cần Internet để đồng bộ với Google Sheets. Kiểm tra Wi-Fi/4G rồi thử lại.</p>
+  <button onclick="location.reload()">Thử lại</button>
+</div>
+
+<div id="setup" class="screen hidden">
+  <img src="icons/icon-192.png" alt="">
+  <h1>Kết nối web app</h1>
+  <p>Dán link web app Apps Script (kết thúc bằng <b>/exec</b>). Nên dán sẵn vào biến APP_URL trong index.html để cả nhà không phải nhập.</p>
+  <input id="url" placeholder="https://script.google.com/macros/s/.../exec" inputmode="url">
+  <button onclick="saveUrl()">Lưu &amp; mở app</button>
+</div>
+
+<iframe id="app" title="Thu Chi Gia Đình" class="hidden" allow="clipboard-write"></iframe>
+<button id="install">📲 Cài đặt ứng dụng</button>
+
+<script>
+const $ = id => document.getElementById(id);
+const store = {
+  get(){ try { return localStorage.getItem('tc_app_url') || ''; } catch(e){ return ''; } },
+  set(v){ try { localStorage.setItem('tc_app_url', v); } catch(e){} }
+};
+
+function start(){
+  const url = APP_URL || store.get();
+  if (!url) { $('splash').classList.add('hidden'); $('setup').classList.remove('hidden'); return; }
+  if (!navigator.onLine) { $('splash').classList.add('hidden'); $('offline').classList.remove('hidden'); return; }
+  const f = $('app');
+  f.classList.remove('hidden');
+  f.onload = () => { f.classList.add('ready'); setTimeout(() => $('splash').classList.add('hidden'), 300); };
+  f.src = url;
+  // Phòng trường hợp onload không bắn
+  setTimeout(() => { f.classList.add('ready'); $('splash').classList.add('hidden'); }, 8000);
+}
+
+function saveUrl(){
+  const v = $('url').value.trim();
+  if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(v)) { alert('Link chưa đúng. Link phải bắt đầu bằng https://script.google.com/ và kết thúc bằng /exec'); return; }
+  store.set(v); $('setup').classList.add('hidden'); $('splash').classList.remove('hidden'); start();
+}
+
+window.addEventListener('offline', () => { $('offline').classList.remove('hidden'); });
+window.addEventListener('online', () => { if (!$('offline').classList.contains('hidden')) location.reload(); });
+
+// Nút cài đặt (Android Chrome)
+let deferred;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; $('install').style.display = 'block'; });
+$('install').onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; $('install').style.display = 'none'; };
+window.addEventListener('appinstalled', () => { $('install').style.display = 'none'; });
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+start();
+</script>
+</body>
+</html>
